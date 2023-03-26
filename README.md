@@ -1,6 +1,16 @@
 # piadda
 piadda is another data dashboard attempt
 
+The main goal is allow visualizing data from ROS2 nodes, in mobile devices or client machines that do not have ROS2 local installation.
+
+The piadda serves a web-application that runs in a device that should have access to ROS2 nodes.
+
+The data could be visualized connecting to device's IP from a web browser.
+
+The client-side do not need ROS2 local installation, because piadda provides an abstraction layer using django-channels (websockets) in order to streaming data from ros2-end-device to client-browser.
+
+The piadda is similar to [PlotJuggler](https://github.com/facontidavide/PlotJuggler) but providing a web interface to data visualization.
+
 # Dependencies
 - channels
 - daphne
@@ -43,4 +53,3 @@ piadda is another data dashboard attempt
 # Resources
 ## icons
 [Data Analytics](https://icons8.com/icon/LgTN0AzFZcRJ/data-analytics) icon by [Icons8](https://icons8.com).
-
