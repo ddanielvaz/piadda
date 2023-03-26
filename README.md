@@ -1,5 +1,5 @@
 # piadda
-piadda Is Another Data Dashboard Attempt
+piadda is another data dashboard attempt
 
 # Dependencies
 - channels
@@ -38,7 +38,7 @@ piadda Is Another Data Dashboard Attempt
 
 - Open in browser
 
-<a href="http://127.0.0.1:8000/" target="_blank">piadda</a>
+[piadda - http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
 # Resources
 ## icons
