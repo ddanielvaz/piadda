@@ -7,7 +7,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 # project
 from dashboard.backends.ros2_channels.executor import ROS2Thread
 from dashboard.backends.ros2_channels.subscribers import MapSubscriber, TimeSeriesSubscriber
-from dashboard.backends.ros2_channels.topics import XYMapChannel, TimeSeriesChannel
+from dashboard.backends.ros2_channels.channels import XYMapChannel, TimeSeriesChannel
 
 
 class DashboardConsumer(AsyncWebsocketConsumer):
