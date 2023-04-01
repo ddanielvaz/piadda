@@ -19,8 +19,8 @@
             {% for key, values in topic.fields_tree.items %}
             {% for value in values %}
             <li>
-              <input class="form-check-input topic-check-input" type="checkbox" value="{{value}}" id="field-{{topic.name}}-{{value}}" data-topic="{{topic.name}}" data-msg-type="{{topic.msg_types.0}}">
-              <label class="form-check-label" for="field-{{topic.name}}-{{value}}">
+              <input class="form-check-input topic-check-input" type="checkbox" value="{{value}}" id="field{{topic.name_html}}-{{value}}" data-topic="{{topic.name}}" data-msg-type="{{topic.msg_types.0}}">
+              <label class="form-check-label" for="field{{topic.name_html}}-{{value}}">
                 {{value}}
               </label>
             </li>

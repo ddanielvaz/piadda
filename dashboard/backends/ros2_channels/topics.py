@@ -61,6 +61,7 @@ class ROS2Field(object):
 class ROS2Topic(object):
     def __init__(self, topic):
         self.name = topic[0]
+        self.name_html = self.name.replace('/', '-')
         self.msg_types = topic[1]
         self.fields = []
         self.fields_tree = {}
