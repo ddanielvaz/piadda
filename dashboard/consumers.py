@@ -19,9 +19,13 @@ class DashboardConsumer(AsyncWebsocketConsumer):
 
     def add_subscriber(self, topic):
         graphic = topic['graphic_type']
-        graphic == 'map' and self.add_map_subscriber(topic)
-        graphic == 'series' and self.add_time_series_subscriber(topic)
-        return True
+        if graphic == 'map':
+            self.add_map_subscriber(topic)
+            return True
+        elif graphic == 'series' or graphic == 'meter':
+            self.add_time_series_subscriber(topic)
+            return True
+        return False
 
     def add_map_subscriber(self, topic_dict):
         topic = XYMapChannel(topic_dict)

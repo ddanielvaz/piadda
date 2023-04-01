@@ -20,7 +20,7 @@ function lowestValue(data) {
   })
 }
 
-function addGraphic(graphicType, key) {
+function addGraphic(graphicType, key, options) {
   let _card = `<div class="mb-3">`;
   _card += `<div class="card">`;
   _card += `<div class="card-header">` + graphicType + `</div>`;
@@ -28,17 +28,20 @@ function addGraphic(graphicType, key) {
   _card += `</div>`;
   _card += `</div>`;
   $("#graphics").append(_card);
-  createSvg("#" + key);
+  createSvg("#" + key, options);
 }
 
-function processForm(graphicType) {
+function processForm(graphicType, options = null) {
   topics = {};
   switch (graphicType) {
     case 'map':
-      addMap();
+      addMap(options);
       break;
     case 'series':
-      addTimeSeries()
+      addTimeSeries(options)
+      break;
+    case 'meter':
+      addMeterGraphic(options);
       break;
   }
 }
@@ -60,7 +63,7 @@ function getYField(inputsSelected) {
   return $(inputsSelected[1]).val();
 }
 
-function addMap() {
+function addMap(options) {
   let checkedElements = $('.topic-check-input:checkbox:checked');
   if (checkedElements.length > 2) {
     console.log('Mapa deve ter apenas duas variáveis')
@@ -78,7 +81,7 @@ function addMap() {
   topics[tkey]['msg_type'] = msg_type;
   topics[tkey]['x'] = getXField(checkedElements);
   topics[tkey]['y'] = getYField(checkedElements);
-  addGraphic(msg_type, topics[tkey]['element_id'])
+  addGraphic(msg_type, topics[tkey]['element_id'], options)
   graphicId++;
   for (const [key, value] of Object.entries(topics)) {
     let data = [];
@@ -91,7 +94,7 @@ function addMap() {
   }
 }
 
-function addTimeSeries() {
+function addTimeSeries(options) {
   $('.topic-check-input:checkbox:checked').each(function () {
     let topic_name = $(this).attr('data-topic');
     let msg_type = $(this).attr('data-msg-type');
@@ -108,7 +111,7 @@ function addTimeSeries() {
       topics[tkey]['msg_type'] = msg_type;
       topics[tkey]['fields'] = [];
       topics[tkey]['fields'].push(field);
-      addGraphic(msg_type, topics[tkey]['element_id'])
+      addGraphic(msg_type, topics[tkey]['element_id'], options)
       graphicId++;
     }
   })
@@ -116,6 +119,39 @@ function addTimeSeries() {
     let data = [];
     data.push(value);
     let element = "#" + topics[key]['element_id'];
+    // when socket get ready, send a message to backend
+    svgElements[element]["socket"].onopen = function () {
+      svgElements[element]["socket"].send(JSON.stringify(data));
+    }
+  }
+}
+
+function addMeterGraphic(options) {
+  $('.topic-check-input:checkbox:checked').each(function () {
+    let topic_name = $(this).attr('data-topic');
+    let msg_type = $(this).attr('data-msg-type');
+    let field = $(this).val();
+    let tkey = topic_name + msg_type;
+    if (tkey in topics) {
+      topics[tkey]['fields'].push(field);
+    } else {
+      topics[tkey] = {};
+      topics[tkey]['name'] = topic_name;
+      topics[tkey]['period'] = 0.2;
+      topics[tkey]['element_id'] = "graph" + graphicId;
+      topics[tkey]['graphic_type'] = 'meter';
+      topics[tkey]['msg_type'] = msg_type;
+      topics[tkey]['fields'] = [];
+      topics[tkey]['fields'].push(field);
+      addGraphic(msg_type, topics[tkey]['element_id'], options)
+      graphicId++;
+    }
+  })
+  for (const [key, value] of Object.entries(topics)) {
+    let data = [];
+    data.push(value);
+    let element = "#" + topics[key]['element_id'];
+    svgElements[element]["fields"] = $('.topic-check-input:checkbox:checked').length;
     // when socket get ready, send a message to backend
     svgElements[element]["socket"].onopen = function () {
       svgElements[element]["socket"].send(JSON.stringify(data));
@@ -133,25 +169,36 @@ function unwrapValues(ds) {
 }
 
 // set the dimensions and margins of the graph
-var margin = { top: 10, right: 30, bottom: 30, left: 60 },
-  width = 460 - margin.left - margin.right,
-  height = 400 - margin.top - margin.bottom;
+var _margin = { top: 10, right: 30, bottom: 30, left: 60 },
+  __width = 460 - _margin.left - _margin.right,
+  __height = 400 - _margin.top - _margin.bottom;
 
-function createSvg(element) {
-  svgElements[element] = {}
-  svgElements[element]["data"] = {}
+function createSvg(element, params) {
+  svgElements[element] = { ...params };
+  svgElements[element]["data"] = {};
   svgElements[element]["xMin"] = Number.POSITIVE_INFINITY;
   svgElements[element]["yMin"] = Number.POSITIVE_INFINITY;
   svgElements[element]["xMax"] = Number.NEGATIVE_INFINITY;
   svgElements[element]["yMax"] = Number.NEGATIVE_INFINITY;
+  // check for necessary parameters
+  if (svgElements[element]["height"] === undefined)
+    svgElements[element]["height"] = __height;
+  //
+  if (svgElements[element]["width"] === undefined)
+    svgElements[element]["width"] = __width;
+  //
+  if (svgElements[element]["maxDataLength"] === undefined)
+    svgElements[element]["maxDataLength"] = DataLength;
+  let width = svgElements[element]["width"];
+  let height = svgElements[element]["height"];
   // append the svg object to the div "element"
   svgElements[element]["svg"] = d3.select(element)
     .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
+    .attr("width", width + _margin.left + _margin.right)
+    .attr("height", height + _margin.top + _margin.bottom)
     .append("g")
     .attr("transform",
-      "translate(" + margin.left + "," + margin.top + ")");
+      "translate(" + _margin.left + "," + _margin.top + ")");
   let data = [{ "ts": 0, "value": 0 }, { "ts": 1, "value": 1 }];
   // Add X axis --> it is a date format
   svgElements[element]["xAxis"] = d3.scaleLinear()
@@ -167,17 +214,19 @@ function createSvg(element) {
   svgElements[element]["yAxis"] = d3.scaleLinear()
     .domain([0, d3.max(data, function (d) { return +d.value; })])
     .range([height, 0]);
-  let y = svgElements[element]["yAxis"];
-  svgElements[element]["svg"].append("g")
-    .attr("class", "y-axis")
-    .call(d3.axisLeft(y));
+  if (svgElements[element]["showYAxis"]) {
+    let y = svgElements[element]["yAxis"];
+    svgElements[element]["svg"].append("g")
+      .attr("class", "y-axis")
+      .call(d3.axisLeft(y));
+  }
   // create a websocket
   svgElements[element]["socket"] = new WebSocket("ws://localhost:8000/ws/dashboard_data/");
   // process every new message received
   svgElements[element]["socket"].onmessage = function (event) {
     let data = JSON.parse(event.data);
     let element = "#" + data.element;
-    pushData(data, svgElements[element]["data"]);
+    pushData(data, svgElements[element]["data"], svgElements[element]["maxDataLength"]);
     let dataset = svgElements[element]["data"];
     switch (data.graphic_type) {
       case 'map':
@@ -185,6 +234,9 @@ function createSvg(element) {
         break;
       case 'series':
         drawLines(element, unwrapValues(dataset));
+        break;
+      case 'meter':
+        drawMeter(element, unwrapValues(dataset));
         break;
     }
   };
@@ -326,9 +378,106 @@ function drawMap(element, data) {
   }
 }
 
-function pushData(data, dataset) {
+function drawMeter(element, data) {
+  let svg = svgElements[element]["svg"];
+  let x = svgElements[element]["xAxis"];
+  let y = svgElements[element]["yAxis"];
+  let xMin = svgElements[element]["xMin"];
+  let xMax = svgElements[element]["xMax"];
+
+  if (data.length > 2) {
+    let max_ts = Math.max(...data.map(function (d) { return d.ts }));
+    let bar_data = data.filter(d => d.ts == max_ts);
+    if (bar_data.length != svgElements[element]["fields"])
+      return;
+    let names = bar_data.map(d => d.name);
+    let x_data = bar_data.map(d => d.value);
+    xMax = Math.max(xMax, Math.max(...x_data) + 2);
+    xMin = Math.min(xMin, Math.min(...x_data) - 2);
+    svgElements[element]["xMax"] = xMax;
+    svgElements[element]["yMax"] = 1.0;
+    svgElements[element]["xMin"] = xMin;
+    svgElements[element]["yMin"] = 0.0;
+    // update xAxis and yAxis
+    if (!compareArrays(x.domain(), [xMin, xMax])) {
+      x.domain([xMin, xMax]);
+      svg.select('.x-axis').call(d3.axisBottom(x));
+    }
+    if (!compareArrays(y.domain(), [0.0, 1.0])) {
+      y.domain([0.0, 1.0]);
+      svg.select('.y-axis').call(d3.axisLeft(y));
+    }
+    const _color = d3.scaleOrdinal(d3.schemeCategory10);
+    // Bars
+    const fixed_height = Math.abs(y(0.8) - y(0.0)) / bar_data.length;
+
+    svg.selectAll(".mybar").remove();
+    svg.selectAll("mybar")
+      .data(bar_data)
+      .enter()
+      .append("rect")
+      .attr("class", "mybar")
+      .attr("x", function (d) { if (d.value >= 0) return x(0); return x(d.value); })
+      .attr("y", function (d) { let k = 1.0 - names.indexOf(d.name) / bar_data.length; return y(k); })
+      .attr("width", function (d) { return Math.abs(x(d.value) - x(0)) })
+      .attr("height", fixed_height)
+      .attr("fill", function (d) { return _color(d.name); });
+    drawMeterLegend(element, bar_data);
+  }
+}
+
+function drawMeterLegend(element, legend_data) {
+  const _color = d3.scaleOrdinal(d3.schemeCategory10);
+  let width = 200;
+  let legendItemSize = 12;
+  let legendSpacing = 4;
+  let xOffset = 0;
+  let yOffset = _margin.top;
+  let height = (legendItemSize + legendSpacing) * legend_data.length;
+  if (legend_data && svgElements[element]["legendCreated"] === undefined) {
+    svgElements[element]["legendCreated"] = d3.select(element)
+      .append("svg")
+      .attr("width", width + _margin.left + _margin.right)
+      .attr("height", height + _margin.top + _margin.bottom);
+    let svg = svgElements[element]["legendCreated"];
+    let legend = svg.selectAll('.legendItem').data(legend_data);
+    legend.enter()
+      .append('rect')
+      .attr('class', 'legendItem')
+      .attr('width', legendItemSize)
+      .attr('height', legendItemSize)
+      .style('fill', d => _color(d.name))
+      .attr('transform',
+        (d, i) => {
+          var x = xOffset;
+          var y = yOffset + (legendItemSize + legendSpacing) * i;
+          return `translate(${x}, ${y})`;
+        });
+
+    //Create legend labels
+    legend.enter()
+      .append('text')
+      .attr('x', xOffset + legendItemSize + 5)
+      .attr('y', (d, i) => yOffset + (legendItemSize + legendSpacing) * i + 12)
+      .text(d => d.name);
+  }
+  if (svgElements[element]["legendCreated"] !== undefined) {
+    let svg = svgElements[element]["legendCreated"];
+    svg.selectAll('.legendValues').remove();
+    let values = svg.selectAll('.legendValues').data(legend_data);
+    values.enter()
+      .append('text')
+      .attr('class', 'legendValues')
+      .attr('x', xOffset + (legendItemSize + 5) * 2)
+      .attr('y', (d, i) => yOffset + (legendItemSize + legendSpacing) * i + 12)
+      .style('fill', d => _color(d.name))
+      .text(d => d.value.toFixed(1));
+  }
+}
+
+function pushData(data, dataset, maxDataLength) {
   if (data.name in dataset) {
-    if (dataset[data.name].length >= DataLength) {
+    if (dataset[data.name].length >= maxDataLength) {
       dataset[data.name].shift()
     }
     dataset[data.name].push(data)

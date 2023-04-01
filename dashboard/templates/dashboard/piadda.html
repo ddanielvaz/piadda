@@ -5,8 +5,8 @@
 <link rel="stylesheet" href="{% static 'dashboard/css/one-style.css' %}?{% now 'U' %}" />
 <main>
   <div class="flex-shrink-0 p-3 bg-white" style="width: 320px;">
-    <span
-      class="d-flex align-items-center pb-3 mb-3 link-dark text-decoration-none border-bottom fs-5 fw-semibold">ROS2 Topics</span>
+    <span class="d-flex align-items-center pb-3 mb-3 link-dark text-decoration-none border-bottom fs-5 fw-semibold">ROS2
+      Topics</span>
     <ul class="list-unstyled ps-0">
       {% for topic in topics %}
       <li class="mb-1">
@@ -19,7 +19,9 @@
             {% for key, values in topic.fields_tree.items %}
             {% for value in values %}
             <li>
-              <input class="form-check-input topic-check-input" type="checkbox" value="{{value}}" id="field{{topic.name_html}}-{{value}}" data-topic="{{topic.name}}" data-msg-type="{{topic.msg_types.0}}">
+              <input class="form-check-input topic-check-input" type="checkbox" value="{{value}}"
+                id="field{{topic.name_html}}-{{value}}" data-topic="{{topic.name}}"
+                data-msg-type="{{topic.msg_types.0}}">
               <label class="form-check-label" for="field{{topic.name_html}}-{{value}}">
                 {{value}}
               </label>
@@ -32,14 +34,31 @@
       {% endfor %}
     </ul>
     <div class="form-group mb-3">
-      <button type="button" onclick="processForm('map')" class="btn btn-primary">Add XY Map</button>
+      <button type="button" id="add_xymap" class="btn btn-primary">Add XY Map</button>
     </div>
     <div class="form-group mb-3">
-      <button type="button" onclick="processForm('series')" class="btn btn-primary">Add Time Series</button>
+      <button type="button" id="add_timeseries" class="btn btn-primary">Add Time Series</button>
+    </div>
+    <div class="form-group mb-3">
+      <button type="button" id="add_meter" class="btn btn-primary">Add Meter</button>
     </div>
   </div>
   <div class="b-example-divider"></div>
   <div id="graphics">
   </div>
 </main>
+<script>
+  $('#add_xymap').on('click', function () {
+    const options = { 'showYAxis': true };
+    processForm('map', options);
+  });
+  $('#add_timeseries').on('click', function () {
+    const options = { 'showYAxis': true };
+    processForm('series', options);
+  });
+  $('#add_meter').on('click', function () {
+    const options = { 'maxDataLength': 10, 'height': 80, 'showYAxis': false };
+    processForm('meter', options);
+  });
+</script>
 {% endblock %}
