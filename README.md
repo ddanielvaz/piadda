@@ -40,7 +40,7 @@ The piadda is similar to [PlotJuggler](https://github.com/facontidavide/PlotJugg
 
 - Source the ros2 installation - where DISTRO could be foxy, galactic, rolling, humble and so on...
 
-`$ source /opt/ros2/DISTRO/setup.bash`
+`$ source /opt/ros/DISTRO/setup.bash`
 
 - Run server
 
@@ -50,6 +50,16 @@ The piadda is similar to [PlotJuggler](https://github.com/facontidavide/PlotJugg
 
 [piadda - http://127.0.0.1:8000/](http://127.0.0.1:8000/)
 
+# Examples
+
+[Turtlesim example](https://github.com/ddanielvaz/piadda/wiki/TurtlesimExample)
+
 # Resources
+
+## Wiki
+
+[Wiki](https://github.com/ddanielvaz/piadda/wiki/)
+
 ## icons
+
 [Data Analytics](https://icons8.com/icon/LgTN0AzFZcRJ/data-analytics) icon by [Icons8](https://icons8.com).
