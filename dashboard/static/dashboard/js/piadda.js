@@ -1,7 +1,6 @@
 const DataLength = 100;
 var graphicId = 0;
 var svgElements = {};
-var lastLegend = [];
 
 const compareArrays = (a, b) =>
   a.length === b.length &&
@@ -117,8 +116,9 @@ function addTimeSeries(options) {
   })
   for (const [key, value] of Object.entries(topics)) {
     let data = [];
-    data.push(value);
     let element = "#" + topics[key]['element_id'];
+    svgElements[element]["lastLegend"] = [];
+    data.push(value);
     // when socket get ready, send a message to backend
     svgElements[element]["socket"].onopen = function () {
       svgElements[element]["socket"].send(JSON.stringify(data));
@@ -246,9 +246,21 @@ function drawLines(element, data) {
   var svg = svgElements[element]["svg"];
   var x = svgElements[element]["xAxis"];
   var y = svgElements[element]["yAxis"];
-  // update xAxis and yAxis
+  let yMin = svgElements[element]["yMin"];
+  let yMax = svgElements[element]["yMax"];
+  // update the x-axis
   x.domain(d3.extent(data, function (d) { return d.ts; }));
-  y.domain([Math.min(0, d3.min(data, function (d) { return d.value; })), d3.max(data, function (d) { return d.value; }) + 2])
+  svg.select('.x-axis').call(d3.axisBottom(x));
+  // check for yMin/yMax
+  yMin = Math.min(yMin, d3.min(data, function (d) { return d.value; }) - 2)
+  yMax = Math.max(yMax, d3.max(data, function (d) { return d.value; }) + 2);
+  svgElements[element]["yMin"] = yMin;
+  svgElements[element]["yMax"] = yMax;
+  // if needed, update y-axis
+  if (!compareArrays(y.domain(), [yMin, yMax])) {
+    y.domain([yMin, yMax])
+    svg.select('.y-axis').call(d3.axisLeft(y));
+  }
 
   var sumstat = d3.nest() // nest function allows to group the calculation per level of a factor
     .key(function (d) { return d.name; })
@@ -277,15 +289,10 @@ function drawLines(element, data) {
         .y(function (d) { return y(+d.value); })
         (d.values)
     })
-  // update the x-axis
-  svg.select('.x-axis').call(d3.axisBottom(x));
-
-  // update the y-axis
-  svg.select('.y-axis').call(d3.axisLeft(y));
-
   // update legend
+  let lastLegend = svgElements[element]["lastLegend"];
   if (!compareArrays(res, lastLegend)) {
-    lastLegend = res;
+    svgElements[element]["lastLegend"] = res;
     if (res.length > 1) {
       var longest = res.reduce(
         function (a, b) {
@@ -328,8 +335,6 @@ function drawLines(element, data) {
       .text(d => d.key);
   }
 }
-
-
 
 function drawMap(element, data) {
   var svg = svgElements[element]["svg"];
