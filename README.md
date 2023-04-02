@@ -54,6 +54,8 @@ The piadda is similar to [PlotJuggler](https://github.com/facontidavide/PlotJugg
 
 [Turtlesim example](https://github.com/ddanielvaz/piadda/wiki/TurtlesimExample)
 
+![image](https://user-images.githubusercontent.com/4839159/229324363-598483cd-d427-4298-bb0c-749087f87363.gif)
+
 # Resources
 
 ## Wiki
