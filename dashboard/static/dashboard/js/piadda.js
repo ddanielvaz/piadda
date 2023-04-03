@@ -110,19 +110,32 @@ function addTimeSeries(options) {
       topics[tkey]['msg_type'] = msg_type;
       topics[tkey]['fields'] = [];
       topics[tkey]['fields'].push(field);
-      addGraphic(msg_type, topics[tkey]['element_id'], options)
-      graphicId++;
     }
   })
+  let msg_type = "";
+  let element_id;
+  let idx = 0;
+  for (const k of Object.keys(topics)) {
+    // it will be the same for each key
+    element_id = topics[k]['element_id'];
+    if (idx == 0) {
+      msg_type = topics[k]['msg_type'];
+      idx++;
+      continue;
+    }
+    msg_type = msg_type.concat("-", topics[k]['msg_type']);
+  }
+  addGraphic(msg_type, element_id, options)
+  graphicId++;
+  let data = [];
+  let element = "#" + element_id;
   for (const [key, value] of Object.entries(topics)) {
-    let data = [];
-    let element = "#" + topics[key]['element_id'];
     svgElements[element]["lastLegend"] = [];
     data.push(value);
-    // when socket get ready, send a message to backend
-    svgElements[element]["socket"].onopen = function () {
-      svgElements[element]["socket"].send(JSON.stringify(data));
-    }
+  }
+  // when socket get ready, send a message to backend
+  svgElements[element]["socket"].onopen = function () {
+    svgElements[element]["socket"].send(JSON.stringify(data));
   }
 }
 
@@ -143,19 +156,35 @@ function addMeterGraphic(options) {
       topics[tkey]['msg_type'] = msg_type;
       topics[tkey]['fields'] = [];
       topics[tkey]['fields'].push(field);
-      addGraphic(msg_type, topics[tkey]['element_id'], options)
-      graphicId++;
     }
   })
-  for (const [key, value] of Object.entries(topics)) {
-    let data = [];
-    data.push(value);
-    let element = "#" + topics[key]['element_id'];
-    svgElements[element]["fields"] = $('.topic-check-input:checkbox:checked').length;
-    // when socket get ready, send a message to backend
-    svgElements[element]["socket"].onopen = function () {
-      svgElements[element]["socket"].send(JSON.stringify(data));
+
+  let msg_type = "";
+  let element_id;
+  let idx = 0;
+  for (const k of Object.keys(topics)) {
+    // it will be the same for each key
+    element_id = topics[k]['element_id'];
+    if (idx == 0) {
+      msg_type = topics[k]['msg_type'];
+      idx++;
+      continue;
     }
+    msg_type = msg_type.concat("-", topics[k]['msg_type']);
+  }
+  addGraphic(msg_type, element_id, options)
+  graphicId++;
+  let data = [];
+  let element = "#" + element_id;
+  svgElements[element]["fields"] = []
+  for (const [key, value] of Object.entries(topics)) {
+    svgElements[element]["fields"] = svgElements[element]["fields"].concat(value['fields']);
+    data.push(value);
+  }
+
+  // when socket get ready, send a message to backend
+  svgElements[element]["socket"].onopen = function () {
+    svgElements[element]["socket"].send(JSON.stringify(data));
   }
 }
 
@@ -391,10 +420,29 @@ function drawMeter(element, data) {
   let xMax = svgElements[element]["xMax"];
 
   if (data.length > 2) {
-    let max_ts = Math.max(...data.map(function (d) { return d.ts }));
-    let bar_data = data.filter(d => d.ts == max_ts);
-    if (bar_data.length != svgElements[element]["fields"])
+    let bar_data = [];
+    // update and get latest data for each "metered" field
+    for (const field of svgElements[element]["fields"]) {
+      // filter all data for specific field name
+      // could return empty array, if field name is not present in time-frame received data
+      let aux = data.filter(d => [field].indexOf(d.name) != -1);
+      if (aux.length) {
+        // get the most recent entry of the array, i.e., largest ts (timestamp)
+        // create or update latest data on svgElements dictionary
+        svgElements[element]["latest" + field] = aux.sort((a, b) => a.ts - b.ts).slice(-1)[0]
+      }
+      // use latest data if exists
+      if (svgElements[element]["latest" + field] !== undefined) {
+        bar_data.push(svgElements[element]["latest" + field]);
+      }
+    }
+    // check if all expected fields exists/were received
+    if (bar_data.length != svgElements[element]["fields"].length) {
+      // FIXME: Not received yet expected fields from backend. Maybe warn the frontend ???
+      // FIXME: the behavior in frontend is a graphic without any values, even if any value has been received (but not all)
+      // FIXME: the graph will only be updated from the moment that all fields have been received at least once
       return;
+    }
     let names = bar_data.map(d => d.name);
     let x_data = bar_data.map(d => d.value);
     xMax = Math.max(xMax, Math.max(...x_data) + 2);
