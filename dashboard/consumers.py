@@ -1,4 +1,5 @@
 # built-in
+import asyncio
 import json
 
 # django
@@ -16,6 +17,11 @@ class DashboardConsumer(AsyncWebsocketConsumer):
         self.ros2 = ROS2Thread()
         self.subscribers = {}
         self.ros2.start()
+        self.mutex = asyncio.Lock()
+    
+    async def threadsafe_send(self, data):
+        async with self.mutex:
+            await self.send(data)
 
     def add_subscriber(self, topic):
         graphic = topic['graphic_type']
@@ -51,7 +57,6 @@ class DashboardConsumer(AsyncWebsocketConsumer):
                     st = self.add_subscriber(data)
                     # FIXME: provide response to websocket-client
                     print('Subscriber was added with sucess:', st)
-                    return
         # FIXME: provide response to websocket-client
         print('Data format invalid... discarding.')
 

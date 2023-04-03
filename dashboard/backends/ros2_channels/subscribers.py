@@ -1,4 +1,5 @@
 # built-in
+import asyncio
 import json
 
 # ros2
@@ -7,7 +8,7 @@ from rclpy.node import Node
 
 class MapSubscriber(Node):
     def __init__(self, asyncws, topic):
-        super().__init__('map_subscriber'+topic.element)
+        super().__init__('map_subscriber'+topic.node_name)
         self.ts_init = self.get_clock().now().nanoseconds
         self.websocket = asyncws
         self.topic = topic
@@ -20,7 +21,7 @@ class MapSubscriber(Node):
         self.topic.y = topic.y
 
     async def listener_callback(self, msg):
-        self.get_logger().info('I heard: "{}"'.format(msg))
+        # self.get_logger().info('I heard: "{}"'.format(msg))
         now = self.get_clock().now().nanoseconds
         if (now - self.last_sent)/1e9 > self.topic.period:
             ts = (now - self.ts_init)/1e9
@@ -31,7 +32,9 @@ class MapSubscriber(Node):
                                'y': eval('msg.{}'.format(self.topic.y))
                                })
             self.last_sent = now
-            await self.websocket.send(data)
+            while self.websocket.mutex.locked():
+                await asyncio.sleep(0.05)
+            await self.websocket.threadsafe_send(data)
 
     def __del__(self):
         print("deleting MapSubscriber", self.topic.element)
@@ -39,7 +42,7 @@ class MapSubscriber(Node):
 
 class TimeSeriesSubscriber(Node):
     def __init__(self, asyncws, topic):
-        super().__init__('time_series_subscriber'+topic.element)
+        super().__init__('time_series_subscriber'+topic.node_name)
         self.ts_init = self.get_clock().now().nanoseconds
         self.websocket = asyncws
         self.topic = topic
@@ -51,12 +54,14 @@ class TimeSeriesSubscriber(Node):
         self.fields = fields
 
     async def listener_callback(self, msg):
-        self.get_logger().info('I heard: "{}"'.format(msg))
+        # self.get_logger().info('I heard: "{}"'.format(msg))
         ts = (self.get_clock().now().nanoseconds - self.ts_init)/1e9
         for f in self.fields:
             data = json.dumps(
                 {'element': self.topic.element, 'graphic_type': self.topic.graphic, 'name': f, 'ts': ts, 'value': eval('msg.{}'.format(f))})
-            await self.websocket.send(data)
+            while self.websocket.mutex.locked():
+                await asyncio.sleep(0.05)
+            await self.websocket.threadsafe_send(data)
 
     def __del__(self):
         print("deleting TimeSeriesSubscriber", self.topic.element)
