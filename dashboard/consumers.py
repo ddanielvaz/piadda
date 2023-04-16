@@ -51,12 +51,15 @@ class DashboardConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
-        if type(text_data_json) is list:
+        if text_data_json == 'ping':
+            return
+        elif type(text_data_json) is list:
             for data in text_data_json:
                 if 'name' in data.keys():
                     st = self.add_subscriber(data)
                     # FIXME: provide response to websocket-client
                     print('Subscriber was added with sucess:', st)
+                    return 0
         # FIXME: provide response to websocket-client
         print('Data format invalid... discarding.')
 

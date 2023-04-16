@@ -19,6 +19,19 @@ function lowestValue(data) {
   })
 }
 
+function sendPing(element) {
+  let ws = svgElements[element]["socket"];
+  switch (ws.readyState) {
+    case WebSocket.OPEN:
+      ws.send(JSON.stringify('ping'));
+      break;
+    case WebSocket.CLOSED:
+    case WebSocket.CLOSING:
+      clearInterval(svgElements[element]["pingPong"]);
+      break;
+  }
+}
+
 function addGraphic(graphicType, key, options) {
   let _card = `<div class="mb-3">`;
   _card += `<div class="card">`;
@@ -251,6 +264,7 @@ function createSvg(element, params) {
   }
   // create a websocket
   svgElements[element]["socket"] = new WebSocket("ws://localhost:8000/ws/dashboard_data/");
+  svgElements[element]["pingPong"] = setInterval(sendPing, 15000, element); //15 seconds
   // process every new message received
   svgElements[element]["socket"].onmessage = function (event) {
     let data = JSON.parse(event.data);
