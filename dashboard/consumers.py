@@ -52,6 +52,13 @@ class DashboardConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
         if text_data_json == 'ping':
+            await self.send(json.dumps('pong'))
+            return 0
+        elif type(text_data_json) is dict and text_data_json.get('cmd') == 'pause':
+            print(text_data_json)
+            sub = self.subscribers.get(text_data_json.get('subscriber'), None)
+            if sub:
+                sub.pause()
             return
         elif type(text_data_json) is list:
             for data in text_data_json:

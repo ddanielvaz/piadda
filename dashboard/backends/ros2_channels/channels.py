@@ -10,7 +10,7 @@ class DataChannel(object):
         self.msg_type_str = topic_dict.get('msg_type')
         self.msg_type = get_message(self.msg_type_str)
         self.graphic = topic_dict.get('graphic_type')
-        self.sub_key = self.name + str(self.msg_type) + self.graphic
+        self.sub_key = self.name + self.element + self.graphic
     
     @property
     def node_name(self):

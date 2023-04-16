@@ -32,10 +32,10 @@ function sendPing(element) {
   }
 }
 
-function addGraphic(graphicType, key, options) {
+function addGraphic(msgType, key, options) {
   let _card = `<div class="mb-3">`;
   _card += `<div class="card">`;
-  _card += `<div class="card-header">` + graphicType + `</div>`;
+  _card += `<div class="card-header">` + msgType + `</div>`;
   _card += `<div class="card-body" id="` + key + `"> </div>`;
   _card += `</div>`;
   _card += `</div>`;
@@ -43,8 +43,67 @@ function addGraphic(graphicType, key, options) {
   createSvg("#" + key, options);
 }
 
+function createMapModal(elementId) {
+  $(elementId).contextmenu(function () {
+    if (svgElements[elementId]["setupModal"]) {
+      svgElements[elementId]["setupModal"].show()
+    } else {
+      let mapModal = document.getElementById('setupMapModal')
+      let modalTitle = mapModal.querySelector('.modal-title')
+      let pauseButton = mapModal.querySelector('.btn-pause')
+      $(pauseButton).on('click', function () {
+        let data = { 'subscriber': svgElements[elementId]["pythonSubscriber"], 'cmd': 'pause' }
+        svgElements[elementId]["socket"].send(JSON.stringify(data))
+      })
+      modalTitle.textContent = 'New message to ' + svgElements[elementId]["pythonSubscriber"]
+      svgElements[elementId]["setupModal"] = new bootstrap.Modal(mapModal, {})
+      svgElements[elementId]["setupModal"].show();
+    }
+    return false
+  });
+}
+
+function createTimeSeriesModal(elementId) {
+  $(elementId).contextmenu(function () {
+    if (svgElements[elementId]["setupModal"]) {
+      svgElements[elementId]["setupModal"].show()
+    } else {
+      let timeSeriesModal = document.getElementById('setupTimeSeriesModal')
+      let modalTitle = timeSeriesModal.querySelector('.modal-title')
+      let pauseButton = timeSeriesModal.querySelector('.btn-pause')
+      $(pauseButton).on('click', function () {
+        let data = { 'subscriber': svgElements[elementId]["pythonSubscriber"], 'cmd': 'pause' }
+        svgElements[elementId]["socket"].send(JSON.stringify(data))
+      })
+      modalTitle.textContent = 'New message to ' + svgElements[elementId]["pythonSubscriber"]
+      svgElements[elementId]["setupModal"] = new bootstrap.Modal(timeSeriesModal, {})
+      svgElements[elementId]["setupModal"].show();
+    }
+    return false
+  });
+}
+
+function createMeterModal(elementId) {
+  $(elementId).contextmenu(function () {
+    if (svgElements[elementId]["setupModal"]) {
+      svgElements[elementId]["setupModal"].show()
+    } else {
+      let meterModal = document.getElementById('setupMeterModal')
+      let modalTitle = meterModal.querySelector('.modal-title')
+      let pauseButton = meterModal.querySelector('.btn-pause')
+      $(pauseButton).on('click', function () {
+        let data = { 'subscriber': svgElements[elementId]["pythonSubscriber"], 'cmd': 'pause' }
+        svgElements[elementId]["socket"].send(JSON.stringify(data))
+      })
+      modalTitle.textContent = 'New message to ' + svgElements[elementId]["pythonSubscriber"]
+      svgElements[elementId]["setupModal"] = new bootstrap.Modal(meterModal, {})
+      svgElements[elementId]["setupModal"].show();
+    }
+    return false
+  });
+}
+
 function processForm(graphicType, options = null) {
-  topics = {};
   switch (graphicType) {
     case 'map':
       addMap(options);
@@ -76,6 +135,7 @@ function getYField(inputsSelected) {
 }
 
 function addMap(options) {
+  let topics = {};
   let checkedElements = $('.topic-check-input:checkbox:checked');
   if (checkedElements.length > 2) {
     console.log('Mapa deve ter apenas duas variáveis')
@@ -94,11 +154,13 @@ function addMap(options) {
   topics[tkey]['x'] = getXField(checkedElements);
   topics[tkey]['y'] = getYField(checkedElements);
   addGraphic(msg_type, topics[tkey]['element_id'], options)
+  createMapModal("#" + topics[tkey]['element_id'])
   graphicId++;
   for (const [key, value] of Object.entries(topics)) {
     let data = [];
     data.push(value);
     let element = "#" + topics[key]['element_id'];
+    svgElements[element]["pythonSubscriber"] = topics[key]["name"] + topics[tkey]['element_id'] + topics[tkey]['graphic_type'];
     // when socket get ready, send a message to backend
     svgElements[element]["socket"].onopen = function () {
       svgElements[element]["socket"].send(JSON.stringify(data));
@@ -107,6 +169,7 @@ function addMap(options) {
 }
 
 function addTimeSeries(options) {
+  let topics = {};
   $('.topic-check-input:checkbox:checked').each(function () {
     let topic_name = $(this).attr('data-topic');
     let msg_type = $(this).attr('data-msg-type');
@@ -139,11 +202,13 @@ function addTimeSeries(options) {
     msg_type = msg_type.concat("-", topics[k]['msg_type']);
   }
   addGraphic(msg_type, element_id, options)
+  createTimeSeriesModal("#" + element_id)
   graphicId++;
   let data = [];
   let element = "#" + element_id;
   for (const [key, value] of Object.entries(topics)) {
     svgElements[element]["lastLegend"] = [];
+    svgElements["#" + element_id]["pythonSubscriber"] = value["name"] + value['element_id'] + value['graphic_type'];
     data.push(value);
   }
   // when socket get ready, send a message to backend
@@ -153,6 +218,7 @@ function addTimeSeries(options) {
 }
 
 function addMeterGraphic(options) {
+  let topics = {};
   $('.topic-check-input:checkbox:checked').each(function () {
     let topic_name = $(this).attr('data-topic');
     let msg_type = $(this).attr('data-msg-type');
@@ -186,12 +252,14 @@ function addMeterGraphic(options) {
     msg_type = msg_type.concat("-", topics[k]['msg_type']);
   }
   addGraphic(msg_type, element_id, options)
+  createMeterModal("#" + element_id)
   graphicId++;
   let data = [];
   let element = "#" + element_id;
   svgElements[element]["fields"] = []
   for (const [key, value] of Object.entries(topics)) {
     svgElements[element]["fields"] = svgElements[element]["fields"].concat(value['fields']);
+    svgElements["#" + element_id]["pythonSubscriber"] = value["name"] + value['element_id'] + value['graphic_type'];
     data.push(value);
   }
 
@@ -268,6 +336,9 @@ function createSvg(element, params) {
   // process every new message received
   svgElements[element]["socket"].onmessage = function (event) {
     let data = JSON.parse(event.data);
+    if (data === 'pong') {
+      return
+    }
     let element = "#" + data.element;
     pushData(data, svgElements[element]["data"], svgElements[element]["maxDataLength"]);
     let dataset = svgElements[element]["data"];

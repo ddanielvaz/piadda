@@ -12,6 +12,7 @@ class MapSubscriber(Node):
         self.ts_init = self.get_clock().now().nanoseconds
         self.websocket = asyncws
         self.topic = topic
+        self.stopped = False
         self.subscription = self.create_subscription(
             self.topic.msg_type, self.topic.name, self.listener_callback, 10)
         self.last_sent = 0.0
@@ -19,9 +20,14 @@ class MapSubscriber(Node):
     def set_fields(self, topic):
         self.topic.x = topic.x
         self.topic.y = topic.y
-
+    
+    def pause(self):
+        self.stopped = not self.stopped
+    
     async def listener_callback(self, msg):
         # self.get_logger().info('I heard: "{}"'.format(msg))
+        if self.stopped:
+            return
         now = self.get_clock().now().nanoseconds
         if (now - self.last_sent)/1e9 > self.topic.period:
             ts = (now - self.ts_init)/1e9
@@ -46,15 +52,21 @@ class TimeSeriesSubscriber(Node):
         self.ts_init = self.get_clock().now().nanoseconds
         self.websocket = asyncws
         self.topic = topic
+        self.stopped = False
         self.subscription = self.create_subscription(
             self.topic.msg_type, self.topic.name, self.listener_callback, 10)
         self.set_fields(self.topic.fields)
 
     def set_fields(self, fields):
         self.fields = fields
+    
+    def pause(self):
+        self.stopped = not self.stopped
 
     async def listener_callback(self, msg):
         # self.get_logger().info('I heard: "{}"'.format(msg))
+        if self.stopped:
+            return
         ts = (self.get_clock().now().nanoseconds - self.ts_init)/1e9
         for f in self.fields:
             data = json.dumps(
