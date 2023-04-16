@@ -35,7 +35,7 @@ function sendPing(element) {
 function addGraphic(msgType, key, options) {
   let _card = `<div class="mb-3">`;
   _card += `<div class="card">`;
-  _card += `<div class="card-header">` + msgType + `</div>`;
+  _card += `<div class="card-header">` + msgType + ' - ' + key + `</div>`;
   _card += `<div class="card-body" id="` + key + `"> </div>`;
   _card += `</div>`;
   _card += `</div>`;
@@ -55,7 +55,7 @@ function createMapModal(elementId) {
         let data = { 'subscriber': svgElements[elementId]["pythonSubscriber"], 'cmd': 'pause' }
         svgElements[elementId]["socket"].send(JSON.stringify(data))
       })
-      modalTitle.textContent = 'New message to ' + svgElements[elementId]["pythonSubscriber"]
+      modalTitle.textContent = 'Setup Map ' + elementId
       svgElements[elementId]["setupModal"] = new bootstrap.Modal(mapModal, {})
       svgElements[elementId]["setupModal"].show();
     }
@@ -75,7 +75,7 @@ function createTimeSeriesModal(elementId) {
         let data = { 'subscriber': svgElements[elementId]["pythonSubscriber"], 'cmd': 'pause' }
         svgElements[elementId]["socket"].send(JSON.stringify(data))
       })
-      modalTitle.textContent = 'New message to ' + svgElements[elementId]["pythonSubscriber"]
+      modalTitle.textContent = 'Setup Time Series ' + elementId
       svgElements[elementId]["setupModal"] = new bootstrap.Modal(timeSeriesModal, {})
       svgElements[elementId]["setupModal"].show();
     }
@@ -95,7 +95,7 @@ function createMeterModal(elementId) {
         let data = { 'subscriber': svgElements[elementId]["pythonSubscriber"], 'cmd': 'pause' }
         svgElements[elementId]["socket"].send(JSON.stringify(data))
       })
-      modalTitle.textContent = 'New message to ' + svgElements[elementId]["pythonSubscriber"]
+      modalTitle.textContent = 'Setup Meter ' + elementId
       svgElements[elementId]["setupModal"] = new bootstrap.Modal(meterModal, {})
       svgElements[elementId]["setupModal"].show();
     }

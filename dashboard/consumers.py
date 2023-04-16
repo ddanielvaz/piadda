@@ -55,7 +55,6 @@ class DashboardConsumer(AsyncWebsocketConsumer):
             await self.send(json.dumps('pong'))
             return 0
         elif type(text_data_json) is dict and text_data_json.get('cmd') == 'pause':
-            print(text_data_json)
             sub = self.subscribers.get(text_data_json.get('subscriber'), None)
             if sub:
                 sub.pause()
