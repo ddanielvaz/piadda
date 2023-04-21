@@ -43,66 +43,6 @@ function addGraphic(msgType, key, options) {
   createSvg("#" + key, options);
 }
 
-function createMapModal(elementId) {
-  $(elementId).contextmenu(function () {
-    if (svgElements[elementId]["setupModal"]) {
-      svgElements[elementId]["setupModal"].show()
-    } else {
-      let mapModal = document.getElementById('setupMapModal')
-      let modalTitle = mapModal.querySelector('.modal-title')
-      let pauseButton = mapModal.querySelector('.btn-pause')
-      $(pauseButton).on('click', function () {
-        let data = { 'subscriber': svgElements[elementId]["pythonSubscriber"], 'cmd': 'pause' }
-        svgElements[elementId]["socket"].send(JSON.stringify(data))
-      })
-      modalTitle.textContent = 'Setup Map ' + elementId
-      svgElements[elementId]["setupModal"] = new bootstrap.Modal(mapModal, {})
-      svgElements[elementId]["setupModal"].show();
-    }
-    return false
-  });
-}
-
-function createTimeSeriesModal(elementId) {
-  $(elementId).contextmenu(function () {
-    if (svgElements[elementId]["setupModal"]) {
-      svgElements[elementId]["setupModal"].show()
-    } else {
-      let timeSeriesModal = document.getElementById('setupTimeSeriesModal')
-      let modalTitle = timeSeriesModal.querySelector('.modal-title')
-      let pauseButton = timeSeriesModal.querySelector('.btn-pause')
-      $(pauseButton).on('click', function () {
-        let data = { 'subscriber': svgElements[elementId]["pythonSubscriber"], 'cmd': 'pause' }
-        svgElements[elementId]["socket"].send(JSON.stringify(data))
-      })
-      modalTitle.textContent = 'Setup Time Series ' + elementId
-      svgElements[elementId]["setupModal"] = new bootstrap.Modal(timeSeriesModal, {})
-      svgElements[elementId]["setupModal"].show();
-    }
-    return false
-  });
-}
-
-function createMeterModal(elementId) {
-  $(elementId).contextmenu(function () {
-    if (svgElements[elementId]["setupModal"]) {
-      svgElements[elementId]["setupModal"].show()
-    } else {
-      let meterModal = document.getElementById('setupMeterModal')
-      let modalTitle = meterModal.querySelector('.modal-title')
-      let pauseButton = meterModal.querySelector('.btn-pause')
-      $(pauseButton).on('click', function () {
-        let data = { 'subscriber': svgElements[elementId]["pythonSubscriber"], 'cmd': 'pause' }
-        svgElements[elementId]["socket"].send(JSON.stringify(data))
-      })
-      modalTitle.textContent = 'Setup Meter ' + elementId
-      svgElements[elementId]["setupModal"] = new bootstrap.Modal(meterModal, {})
-      svgElements[elementId]["setupModal"].show();
-    }
-    return false
-  });
-}
-
 function processForm(graphicType, options = null) {
   switch (graphicType) {
     case 'map':
@@ -154,7 +94,7 @@ function addMap(options) {
   topics[tkey]['x'] = getXField(checkedElements);
   topics[tkey]['y'] = getYField(checkedElements);
   addGraphic(msg_type, topics[tkey]['element_id'], options)
-  createMapModal("#" + topics[tkey]['element_id'])
+  createMapModal(svgElements, "#" + topics[tkey]['element_id'])
   graphicId++;
   for (const [key, value] of Object.entries(topics)) {
     let data = [];
@@ -202,7 +142,7 @@ function addTimeSeries(options) {
     msg_type = msg_type.concat("-", topics[k]['msg_type']);
   }
   addGraphic(msg_type, element_id, options)
-  createTimeSeriesModal("#" + element_id)
+  createTimeSeriesModal(svgElements, "#" + element_id)
   graphicId++;
   let data = [];
   let element = "#" + element_id;
@@ -252,7 +192,7 @@ function addMeterGraphic(options) {
     msg_type = msg_type.concat("-", topics[k]['msg_type']);
   }
   addGraphic(msg_type, element_id, options)
-  createMeterModal("#" + element_id)
+  createMeterModal(svgElements, "#" + element_id)
   graphicId++;
   let data = [];
   let element = "#" + element_id;
