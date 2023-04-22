@@ -56,6 +56,7 @@ function processForm(graphicType, options = null) {
       break;
   }
 }
+
 function getXField(inputsSelected) {
   // try search field with name 'x'
   maybe_x = inputsSelected.filter(inputElement => inputElement.value == 'x');
@@ -78,6 +79,7 @@ function addMap(options) {
   let topics = {};
   let checkedElements = $('.topic-check-input:checkbox:checked');
   if (checkedElements.length > 2) {
+    // FIXME: provide feedback to user/client
     console.log('Mapa deve ter apenas duas variáveis')
     return
   }
@@ -472,6 +474,16 @@ function drawMeter(element, data) {
     let x_data = bar_data.map(d => d.value);
     xMax = Math.max(xMax, Math.max(...x_data) + 2);
     xMin = Math.min(xMin, Math.min(...x_data) - 2);
+    let specs = [];
+    if (svgElements[element]["specLimitsEnabled"]) {
+      // update xMin and xMax
+      xMin = Math.min(xMin, svgElements[element]["usl"]);
+      xMin = Math.min(xMin, svgElements[element]["lsl"]);
+      xMax = Math.max(xMax, svgElements[element]["usl"]);
+      xMax = Math.max(xMax, svgElements[element]["lsl"]);
+      specs.push({ 'name': 'LSL', 'color': '#ff0000', 'values': [{ 'x': svgElements[element]["lsl"], 'y': 0.0 }, { 'x': svgElements[element]["lsl"], 'y': 1.0 }] })
+      specs.push({ 'name': 'USL', 'color': '#00ff00', 'values': [{ 'x': svgElements[element]["usl"], 'y': 0.0 }, { 'x': svgElements[element]["usl"], 'y': 1.0 }] })
+    }
     svgElements[element]["xMax"] = xMax;
     svgElements[element]["yMax"] = 1.0;
     svgElements[element]["xMin"] = xMin;
@@ -488,7 +500,6 @@ function drawMeter(element, data) {
     const _color = d3.scaleOrdinal(d3.schemeCategory10);
     // Bars
     const fixed_height = Math.abs(y(0.8) - y(0.0)) / bar_data.length;
-
     svg.selectAll(".mybar").remove();
     svg.selectAll("mybar")
       .data(bar_data)
@@ -500,6 +511,25 @@ function drawMeter(element, data) {
       .attr("width", function (d) { return Math.abs(x(d.value) - x(0)) })
       .attr("height", fixed_height)
       .attr("fill", function (d) { return _color(d.name); });
+    // Draw Specification Lines
+    if (svgElements[element]["specLimitsEnabled"]) {
+      svg.selectAll(".line").remove();
+      // Draw the line
+      svg.selectAll(".line")
+        .data(specs)
+        .enter()
+        .append("path")
+        .attr("class", "line")
+        .attr("fill", "none")
+        .attr("stroke", function (d) { return d.color; })
+        .attr("stroke-width", 1.5)
+        .attr("d", function (d) {
+          return d3.line()
+            .x(function (d) { return x(d.x); })
+            .y(function (d) { return y(d.y); })
+            (d.values)
+        })
+    }
     drawMeterLegend(element, bar_data);
   }
 }

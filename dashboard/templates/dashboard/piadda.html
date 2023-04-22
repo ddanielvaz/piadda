@@ -4,7 +4,7 @@
 <script src="{% static 'dashboard/js/modals.js' %}"></script>
 <script src="{% static 'dashboard/js/piadda.js' %}"></script>
 <link rel="stylesheet" href="{% static 'dashboard/css/one-style.css' %}?{% now 'U' %}" />
-<main>
+<main id="main">
   <div class="flex-shrink-0 p-3 bg-white" style="width: 320px;">
     <span class="d-flex align-items-center pb-3 mb-3 link-dark text-decoration-none border-bottom fs-5 fw-semibold">ROS2
       Topics</span>
@@ -47,10 +47,6 @@
   <div class="b-example-divider"></div>
   <div id="graphics">
   </div>
-  <!-- Modals -->
-  {% include 'dashboard/modal_map.html' %}
-  {% include 'dashboard/modal_timeseries.html' %}
-  {% include 'dashboard/modal_meter.html' %}
 </main>
 <script>
   $('#add_xymap').on('click', function () {
