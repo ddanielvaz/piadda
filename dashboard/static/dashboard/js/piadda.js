@@ -133,6 +133,17 @@ function createSvg(element, params) {
   };
 }
 
+function removeGraphic(graphicKey) {
+  let elementId = '#' + graphicKey;
+  let divParent = '#_' + graphicKey;
+  if (elementId in svgElements) {
+    clearInterval(svgElements[elementId]["pingPong"]);
+    svgElements[elementId]["socket"].close()
+    delete svgElements[elementId];
+  }
+  $(divParent).remove()
+}
+
 function pushData(data, dataset, maxDataLength) {
   if (data.name in dataset) {
     if (dataset[data.name].length >= maxDataLength) {
