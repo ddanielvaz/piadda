@@ -52,11 +52,12 @@ function addMap(options) {
 }
 
 function addMapElement(msgType, key, options) {
-    let _card = '<div class="mb-3">';
+    let _card = '<div class="col mb-3" id="_' + key + '">';
     _card += '<div class="card">';
     _card += '<div class="card-header">';
     _card += '<div class="row">';
     _card += '<div class="col-auto me-auto">' + msgType + ' - ' + key + '</div>';
+    _card += `<div class="col-auto"> <button type="button" class="btn-close" aria-label="Close" onclick="removeGraphic('` + key + `')"></button> </div>`;
     _card += '</div>';
     _card += '</div>';
     _card += '<div class="card-body" id="' + key + '"> </div>';
